@@ -1,6 +1,11 @@
 # DevDrop Backend Server
 
 This is the backend server for **DevDrop**, a secure, real-time file-sharing application built with the MERN stack (MongoDB, Express, React, Node.js) and TypeScript.
+## Frontend Repository
+
+The frontend client for DevDrop (React + TypeScript + Tailwind + Socket.io) is available here:
+
+🔗 https://github.com/taniyakamboj15/devDrop-frontend
 
 ## Features
 
