@@ -14,9 +14,9 @@ Access the frontend application **[DevDrop Frontend](https://github.com/taniyaka
 -   **File Sharing**:
     -   **Public Sharing**: Broadcast files to all connected users.
     -   **Private Sharing**: Send files securely to specific users.
-    -   **Offline Delivery**: **[NEW]** Files sent to offline users are queued and instantly delivered when they log in.
+    -   **Offline Delivery**: Files sent to offline users are queued and instantly delivered when they log in.
     -   **Chunked Uploads**: Supports large file uploads via chunking for reliability.
--   **User Search**: **[NEW]** Search for any registered user by name or email to send files, regardless of their online status.
+-   **User Search**:  Search for any registered user by name or email to send files, regardless of their online status.
 -   **Local Storage**: Files are stored locally in the `uploads/` directory with sanitized names.
 -   **Security**:
     -   **Authentication**: JWT (JSON Web Tokens) with HTTP-Only cookies to prevent XSS.
