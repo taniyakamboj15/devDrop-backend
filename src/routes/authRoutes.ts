@@ -8,6 +8,7 @@ import {
     forgotPassword,
     verifyOtp,
     resetPassword,
+    searchUsers,
 } from '../controllers/authController';
 import { protect } from '../middleware/authMiddleware';
 import { validateSignup, validateLogin } from '../middleware/validationMiddleware';
@@ -24,5 +25,7 @@ router.post('/reset-password', authLimiter, resetPassword);
 router.route('/profile')
     .get(protect, apiLimiter, getUserProfile)
     .put(protect, apiLimiter, updateUserProfile);
+
+router.get('/search', protect, apiLimiter, searchUsers);
 
 export default router;

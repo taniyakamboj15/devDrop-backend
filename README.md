@@ -8,8 +8,10 @@ This is the backend server for **DevDrop**, a secure, real-time file-sharing app
 -   **Real-time Communication**: Powered by `Socket.io` for instant file sharing and user status updates.
 -   **File Sharing**:
     -   **Public Sharing**: Broadcast files to all connected users.
-    -   **Private Sharing**: Send files securely to specific online users.
+    -   **Private Sharing**: Send files securely to specific users.
+    -   **Offline Delivery**: **[NEW]** Files sent to offline users are queued and instantly delivered when they log in.
     -   **Chunked Uploads**: Supports large file uploads via chunking for reliability.
+-   **User Search**: **[NEW]** Search for any registered user by name or email to send files, regardless of their online status.
 -   **Local Storage**: Files are stored locally in the `uploads/` directory with sanitized names.
 -   **Security**:
     -   **Authentication**: JWT (JSON Web Tokens) with HTTP-Only cookies to prevent XSS.
@@ -30,7 +32,7 @@ This is the backend server for **DevDrop**, a secure, real-time file-sharing app
 -   **Framework**: Express.js
 -   **Language**: TypeScript
 -   **Database**: MongoDB (via Mongoose)
--   **Real-time**: Socket.io
+-   **Real-time**: Socket.io (with Room-based targeting)
 -   **Auth**: JSON Web Tokens (JWT), BCrypt, Cookie-Parser
 -   **Utilities**: Nodemailer (Email), Node-Cron (Scheduling)
 
@@ -87,17 +89,19 @@ EMAIL_PASS=your_email_password
 -   `POST /reset-password/:token` - Reset password.
 -   `GET /profile` - Get current user profile (Protected).
 -   `PUT /profile` - Update user profile (Protected).
+-   `GET /search` - **[NEW]** Search users by name or email.
 
 ## Socket Events
 
-The server listens for and emits the following socket events for real-time functionality:
+The server listens for and emits the following socket events for real-time functionality. Now utilizes **Socket Rooms** (room name = `userId`) for reliable multi-tab support.
 
 -   `connection` / `disconnect`: Handle user presence.
--   `join`: Register user with `userId` to map to `socketId`.
+-   `join`: Register user and join them to their personal room (`socket.join(userId)`).
 -   `upload-start`: Initiate a file upload session.
 -   `upload-chunk`: Receive file binary chunks.
 -   `upload-end`: Finalize upload and notify recipients.
--   `file-shared`: Emit to recipients when a file is ready for download.
+-   `file-shared`: Emit to recipient's room when a file is ready. Contains `isOffline` flag if delivered asynchronously.
+-   `file-delivered`: **[NEW]** Emitted to the Sender's room when an offline recipient comes online and successfully receives a pending file. 
 -   `online-users`: Broadcast the list of currently active users.
 
 ## Security & Implementation Details
@@ -114,10 +118,11 @@ The server listens for and emits the following socket events for real-time funct
 ### Edge Cases Handling
 
 **Scenario: Recipient goes offline during Private File Transfer**
-1.  **Upload Start**: Sender initiates upload. Server checks if Recipient is online.
-2.  **Mid-Transfer Disconnect**: Recipient closes browser while file is chunking.
+1.  **Upload Start**: Sender initiates upload.
+2.  **Mid-Transfer / Offline**: If the Recipient is offline, the file is saved to disk and a `FileTransfer` record is created with status `pending`.
 3.  **Completion**:
-    -   Server finishes saving the file to `uploads/`.
-    -   **Check**: Server attempts to find Recipient's socket ID in `onlineUsers`.
-    -   **Result**: Recipient is not found. The `file-shared` event is **NOT** emitted to the offline user to prevent socket errors. The Sender still gets a success ack, but the recipient won't see it until re-login (implementation dependent) or it's simply a missed transfer in this real-time implementation.
+    -   **Sender Feedback**: Sender sees "Private to [Name] (Queued)".
+    -   **Recipient Login**: When the recipient logs in next, the `join` event triggers a check for pending files.
+    -   **Delivery**: Pending files are delivered immediately with an `isOffline: true` flag (provoking a specific toast).
+    -   **Receipt**: The Sender (if online) receives a `file-delivered` event, updating their UI status to "Delivered".
 

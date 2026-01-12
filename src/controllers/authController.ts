@@ -227,6 +227,28 @@ const resetPassword = async (req: Request, res: Response, next: NextFunction) =>
         next(error);
     }
 };
+const searchUsers = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { query } = req.query;
+
+        if (!query) {
+            res.status(400);
+            throw new Error('Search query is required');
+        }
+
+        const users = await User.find({
+            $or: [
+                { name: { $regex: query as string, $options: 'i' } },
+                { email: { $regex: query as string, $options: 'i' } }
+            ],
+            _id: { $ne: req.user!._id } // Exclude current user
+        }).select('_id name email');
+
+        res.json(users);
+    } catch (error) {
+        next(error);
+    }
+};
 
 export {
     signup,
@@ -237,4 +259,5 @@ export {
     forgotPassword,
     verifyOtp,
     resetPassword,
+    searchUsers,
 };
